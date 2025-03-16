@@ -128,7 +128,7 @@ export const GoogleAIResponseModality = {
   Text: "TEXT",
   Image: "IMAGE",
   Audio: "AUDIO",
-}
+};
 
 export type GoogleAIModelModality =
   (typeof GoogleAIResponseModality)[keyof typeof GoogleAIResponseModality];
@@ -244,7 +244,6 @@ export interface GoogleAIModelParams {
    * The modalities of the response.
    */
   responseModalities?: GoogleAIModelModality[];
-
 }
 
 export type GoogleAIToolType = BindToolsInput | GeminiTool;
