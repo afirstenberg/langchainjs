@@ -430,8 +430,8 @@ function convertStandardContentBlockToGeminiPart(
 
   const ret: Gemini.Part | null = baseGeminiPart();
   if (ret) {
-    if ("thoughtSignature" in ret) {
-      ret.thoughtSignature = ret.thoughtSignature!;
+    if ("thoughtSignature" in block) {
+      ret.thoughtSignature = block.thoughtSignature! as string;
     }
   }
   return ret;
@@ -502,12 +502,16 @@ function convertStandardContentMessageToGeminiContent(
   // Convert AIMessage tool_calls to functionCall parts
   if (AIMessage.isInstance(message) && message.tool_calls?.length) {
     for (const toolCall of message.tool_calls) {
-      parts.push({
+      const part = {
         functionCall: {
           name: toolCall.name,
           args: toolCall.args ?? {},
         },
-      } as Gemini.Part.FunctionCall);
+      } as Gemini.Part.FunctionCall;
+      if ("thoughtSignature" in toolCall) {
+        part.thoughtSignature = toolCall.thoughtSignature as string;
+      }
+      parts.push(part);
     }
   }
 
