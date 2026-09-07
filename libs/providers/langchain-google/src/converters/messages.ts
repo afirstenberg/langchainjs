@@ -517,20 +517,9 @@ function convertStandardContentMessageToGeminiContent(
   return { role, parts };
 }
 
-/**
- * Converts a single LangChain message with legacy content blocks (v0 format) to Gemini Content.
- * This handles messages that have `response_metadata.output_version === "v0"`.
- *
- * This is intended to be called from `convertMessagesToGeminiContent`
- */
-function convertLegacyContentMessageToGeminiContent(
-  message: BaseMessage,
-  messages: BaseMessage[]
-): Gemini.Content | null {
-  // Skip system messages - they're handled separately
-  if (SystemMessage.isInstance(message)) {
-    return null;
-  }
+function convertLegacyPartToGeminiPart(
+  item: string | ContentBlock | Text
+): Gemini.Part {
 
   /**
    * @deprecated - This is for use by `convertLegacyContentMessageToGeminiContent` only
@@ -702,6 +691,60 @@ function convertLegacyContentMessageToGeminiContent(
     return ret;
   }
 
+  function baseGeminiPart(): Gemini.Part {
+    if( typeof item === "string" ){
+      return {text: item};
+    } else if( typeof item === "object" && item !== null ){
+      if( isMessageContentText( item ) ){
+        return {text: item.text};
+      } else if( isDataContentBlock( item ) ){
+        return convertToProviderContentBlock( item, geminiContentBlockConverter )
+      } else if( "type" in item && item?.type === "functionCall" ){
+        const {type, functionCall, ...etc} = item;
+        return {
+          ...etc,
+          functionCall,
+        } as Gemini.Part.FunctionCall;
+      } else if( "type" in item && item?.type === "executableCode" ){
+        const {type, executableCode, ...etc} = item;
+        return {
+          ...etc,
+          executableCode,
+        } as Gemini.Part.ExecutableCode;
+      } else if( "type" in item && item?.type === "codeExecutionResult" ){
+        const {type, codeExecutionResult, ...etc} = item;
+        return {
+          ...etc,
+          codeExecutionResult,
+        } as Gemini.Part.CodeExecutionResult;
+      } else if( isMessageContentImageUrl( item ) ){
+        return messageContentImageUrl( item );
+      } else if( isMessageContentMedia( item ) ){
+        return messageContentMedia( item );
+      }
+    }
+    return item as Gemini.Part;
+  }
+
+  const ret = baseGeminiPart();
+  return ret;
+}
+
+/**
+ * Converts a single LangChain message with legacy content blocks (v0 format) to Gemini Content.
+ * This handles messages that have `response_metadata.output_version === "v0"`.
+ *
+ * This is intended to be called from `convertMessagesToGeminiContent`
+ */
+function convertLegacyContentMessageToGeminiContent(
+  message: BaseMessage,
+  messages: BaseMessage[]
+): Gemini.Content | null {
+  // Skip system messages - they're handled separately
+  if (SystemMessage.isInstance(message)) {
+    return null;
+  }
+
   const role: Gemini.Role = iife(() => {
     if (HumanMessage.isInstance(message)) {
       return "user";
@@ -744,41 +787,8 @@ function convertLegacyContentMessageToGeminiContent(
   } else if (Array.isArray(message.content)) {
     // Array of content blocks (legacy format)
     for (const item of message.content) {
-      if (typeof item === "string") {
-        parts.push({ text: item });
-      } else if (typeof item === "object" && item !== null) {
-        if (isMessageContentText(item)) {
-          parts.push({ text: item.text });
-        } else if (isDataContentBlock(item)) {
-          parts.push(
-            convertToProviderContentBlock(item, geminiContentBlockConverter)
-          );
-        } else if (item?.type === "functionCall") {
-          const { type, functionCall, ...etc } = item;
-          parts.push({
-            ...etc,
-            functionCall,
-          } as Gemini.Part.FunctionCall);
-        } else if (item?.type === "executableCode") {
-          const { type, executableCode, ...etc } = item;
-          parts.push({
-            ...etc,
-            executableCode,
-          } as Gemini.Part.ExecutableCode);
-        } else if (item?.type === "codeExecutionResult") {
-          const { type, codeExecutionResult, ...etc } = item;
-          parts.push({
-            ...etc,
-            codeExecutionResult,
-          } as Gemini.Part.CodeExecutionResult);
-        } else if (isMessageContentImageUrl(item)) {
-          parts.push(messageContentImageUrl(item));
-        } else if (isMessageContentMedia(item)) {
-          parts.push(messageContentMedia(item));
-        } else {
-          parts.push(item as Gemini.Part);
-        }
-      }
+      const part = convertLegacyPartToGeminiPart(item);
+      parts.push(part);
     }
   }
 
