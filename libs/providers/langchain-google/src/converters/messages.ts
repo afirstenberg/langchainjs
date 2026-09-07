@@ -388,9 +388,12 @@ function convertStandardReasoningBlockToGeminiPart(
   // standard block they would be if "thought" wasn't set to true.
   // If it exists, we'll use that. Otherwise, we'll assume it was
   // originally a text block.
-  const ret = "reasoningContentBlock" in block && block.reasoningContentBlock
-    ? convertStandardContentBlockToGeminiPart(block.reasoningContentBlock as ContentBlock.Standard)
-    : {text: block.reasoning}
+  const ret =
+    "reasoningContentBlock" in block && block.reasoningContentBlock
+      ? convertStandardContentBlockToGeminiPart(
+          block.reasoningContentBlock as ContentBlock.Standard
+        )
+      : { text: block.reasoning };
 
   // Then add that this came from the thinking process
   if (ret) {
@@ -409,7 +412,6 @@ function convertStandardReasoningBlockToGeminiPart(
 function convertStandardContentBlockToGeminiPart(
   block: ContentBlock.Standard
 ): Gemini.Part | null {
-
   function baseGeminiPart(): Gemini.Part | null {
     switch (block.type) {
       case "text":
@@ -556,7 +558,6 @@ function convertStandardContentMessageToGeminiContent(
 function convertLegacyPartToGeminiPart(
   item: string | ContentBlock | Text
 ): Gemini.Part {
-
   /**
    * @deprecated - This is for use by `convertLegacyContentMessageToGeminiContent` only
    */
@@ -728,42 +729,42 @@ function convertLegacyPartToGeminiPart(
   }
 
   function baseGeminiPart(): Gemini.Part {
-    if( typeof item === "string" ){
-      return {text: item};
-    } else if( typeof item === "object" && item !== null ){
-      if( isMessageContentText( item ) ){
-        return {text: item.text};
-      } else if( isDataContentBlock( item ) ){
-        return convertToProviderContentBlock( item, geminiContentBlockConverter )
-      } else if( "type" in item && item?.type === "functionCall" ){
-        const {type, functionCall, ...etc} = item;
+    if (typeof item === "string") {
+      return { text: item };
+    } else if (typeof item === "object" && item !== null) {
+      if (isMessageContentText(item)) {
+        return { text: item.text };
+      } else if (isDataContentBlock(item)) {
+        return convertToProviderContentBlock(item, geminiContentBlockConverter);
+      } else if ("type" in item && item?.type === "functionCall") {
+        const { type, functionCall, ...etc } = item;
         return {
           ...etc,
           functionCall,
         } as Gemini.Part.FunctionCall;
-      } else if( "type" in item && item?.type === "executableCode" ){
-        const {type, executableCode, ...etc} = item;
+      } else if ("type" in item && item?.type === "executableCode") {
+        const { type, executableCode, ...etc } = item;
         return {
           ...etc,
           executableCode,
         } as Gemini.Part.ExecutableCode;
-      } else if( "type" in item && item?.type === "codeExecutionResult" ){
-        const {type, codeExecutionResult, ...etc} = item;
+      } else if ("type" in item && item?.type === "codeExecutionResult") {
+        const { type, codeExecutionResult, ...etc } = item;
         return {
           ...etc,
           codeExecutionResult,
         } as Gemini.Part.CodeExecutionResult;
-      } else if( isMessageContentImageUrl( item ) ){
-        return messageContentImageUrl( item );
-      } else if( isMessageContentMedia( item ) ){
-        return messageContentMedia( item );
+      } else if (isMessageContentImageUrl(item)) {
+        return messageContentImageUrl(item);
+      } else if (isMessageContentMedia(item)) {
+        return messageContentMedia(item);
       }
     }
     return item as Gemini.Part;
   }
 
   const ret = baseGeminiPart();
-  const itemRecord = item as Record<string,unknown>;
+  const itemRecord = item as Record<string, unknown>;
   if ("thought" in itemRecord) {
     ret.thought = itemRecord.thought as boolean;
   }

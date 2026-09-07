@@ -1847,7 +1847,6 @@ describe.each(thinkingModelInfo)(
       expect(sentFunctionCallPart).toBeDefined();
       expect(sentFunctionCallPart?.thoughtSignature).toBe(toolCallSignature);
     });
-
   }
 );
 
