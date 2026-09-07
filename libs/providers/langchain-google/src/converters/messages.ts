@@ -381,6 +381,25 @@ function convertStandardVideoContentBlockToGeminiPart(
   return ret;
 }
 
+function convertStandardReasoningBlockToGeminiPart(
+  block: ContentBlock.Reasoning
+): Gemini.Part | null {
+  // Reasoning blocks created from Gemini should contain the base
+  // standard block they would be if "thought" wasn't set to true.
+  // If it exists, we'll use that. Otherwise, we'll assume it was
+  // originally a text block.
+  const ret = "reasoningContentBlock" in block && block.reasoningContentBlock
+    ? convertStandardContentBlockToGeminiPart(block.reasoningContentBlock as ContentBlock.Standard)
+    : {text: block.reasoning}
+
+  // Then add that this came from the thinking process
+  if (ret) {
+    ret.thought = true;
+  }
+
+  return ret;
+}
+
 /**
  * Converts a single LangChain standard content block (v1 format)
  * into a Gemini.Part.
@@ -390,19 +409,32 @@ function convertStandardVideoContentBlockToGeminiPart(
 function convertStandardContentBlockToGeminiPart(
   block: ContentBlock.Standard
 ): Gemini.Part | null {
-  switch (block.type) {
-    case "text":
-      return { text: block.text };
-    case "image":
-    case "audio":
-    case "text-plain":
-    case "file":
-      return convertStandardDataContentBlockToGeminiPart(block);
-    case "video":
-      return convertStandardVideoContentBlockToGeminiPart(block);
-    default:
-      return null;
+
+  function baseGeminiPart(): Gemini.Part | null {
+    switch (block.type) {
+      case "text":
+        return { text: block.text };
+      case "reasoning":
+        return convertStandardReasoningBlockToGeminiPart(block);
+      case "image":
+      case "audio":
+      case "text-plain":
+      case "file":
+        return convertStandardDataContentBlockToGeminiPart(block);
+      case "video":
+        return convertStandardVideoContentBlockToGeminiPart(block);
+      default:
+        return null;
+    }
   }
+
+  const ret: Gemini.Part | null = baseGeminiPart();
+  if (ret) {
+    if ("thoughtSignature" in ret) {
+      ret.thoughtSignature = ret.thoughtSignature!;
+    }
+  }
+  return ret;
 }
 
 /**
