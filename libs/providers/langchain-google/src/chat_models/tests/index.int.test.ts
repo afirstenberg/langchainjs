@@ -134,7 +134,12 @@ const allModelInfo: ModelInfo[] = [
     model: "gemini-3.7-flash",
     testConfig: {
       isThinking: true,
-      only: true,
+    },
+  },
+  {
+    model: "gemini-3.8-flash",
+    testConfig: {
+      isThinking: true,
     },
   },
   {
@@ -1744,7 +1749,7 @@ describe.each(thinkingModelInfo)(
       );
       expect(hasThoughtSignature).toBe(true);
     });
-    test.only("thought/thoughtSignature survive a multi-turn round trip (regression for #10461)", async () => {
+    test("thought/thoughtSignature survive a multi-turn round trip (regression for #10461)", async () => {
       // Reproduces the production bug: resending a prior thinking AIMessage
       // as history silently stripped its thought marker/signature before
       // this fix, either losing the flag (legacy content array) or dropping
@@ -1802,7 +1807,7 @@ describe.each(thinkingModelInfo)(
       ).toBe(true);
     });
 
-    test.only("functionCall thoughtSignature survives a multi-turn round trip after a real tool call (root cause: tool_calls-rebuild path)", async () => {
+    test("functionCall thoughtSignature survives a multi-turn round trip after a real tool call (root cause: tool_calls-rebuild path)", async () => {
       // tool_calls-rebuilt functionCall parts don't get thoughtSignature "for free" like content-block items do.
       const tools = [weatherTool];
       const llm: Runnable = newChatGoogle({
