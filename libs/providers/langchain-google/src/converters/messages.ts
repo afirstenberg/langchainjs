@@ -727,6 +727,13 @@ function convertLegacyPartToGeminiPart(
   }
 
   const ret = baseGeminiPart();
+  const itemRecord = item as Record<string,unknown>;
+  if ("thought" in itemRecord) {
+    ret.thought = itemRecord.thought as boolean;
+  }
+  if ("thoughtSignature" in itemRecord) {
+    ret.thoughtSignature = itemRecord.thoughtSignature as string;
+  }
   return ret;
 }
 
