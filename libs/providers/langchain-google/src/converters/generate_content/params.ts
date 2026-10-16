@@ -15,9 +15,8 @@ import {
   convertReasoningEffortToReasoningTokens,
   convertReasoningTokensToReasoningEffort,
   getModelVersion,
-  getModelSpecialty,
+  getModelSpecialty, getModelFamily,
 } from "../shared/params.js";
-
 
 // Gemini 3 models that accept thinkingLevel "MINIMAL"; the others reject it with a 400, so they get "LOW".
 // TODO: Move this to model profile.
@@ -86,7 +85,8 @@ export function convertFieldsToThinkingConfig(
   }
   if (
     thinkingLevel === "MINIMAL" &&
-    model.startsWith("gemini-3") &&
+    getModelFamily(model) === "gemini" &&
+    Number(getModelVersion(model)) >= 3 &&
     !supportsMinimalThinkingLevel(model)
   ) {
     thinkingLevel = "LOW";
@@ -299,4 +299,3 @@ export function combineGoogleChatModelFields(
   }
   return combined;
 }
-
